@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="claro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Registro de asistencia por curso: estudiantes, sesiones, reportes y exportación a CSV.">
+  <title>Registro de asistencia</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+  <header class="barra no-imprimir">
+    <div class="barra-fila">
+      <h1 class="marca">Registro de asistencia</h1>
+      <button type="button" id="btn-menu" class="btn-barra" aria-expanded="false" aria-controls="menu-principal">Menú</button>
+
+      <nav id="menu-principal" class="menu" aria-label="Principal">
+        <ul>
+          <li><a href="#resumen" data-vista="resumen">Resumen</a></li>
+          <li><a href="#cursos" data-vista="cursos">Cursos</a></li>
+          <li><a href="#estudiantes" data-vista="estudiantes">Estudiantes</a></li>
+          <li><a href="#asistencia" data-vista="asistencia">Asistencia</a></li>
+          <li><a href="#reportes" data-vista="reportes">Reportes</a></li>
+          <li><a href="#ajustes" data-vista="ajustes">Ajustes</a></li>
+        </ul>
+      </nav>
+
+      <div class="herramientas">
+        <label for="select-curso">Curso</label>
+        <select id="select-curso"></select>
+        <button type="button" id="btn-tema" class="btn-barra" aria-pressed="false">Modo oscuro</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="contenido" class="principal" tabindex="-1">
+
+    <!-- RESUMEN -->
+    <section id="vista-resumen" class="vista" aria-labelledby="t-resumen" hidden>
+      <h2 id="t-resumen" tabindex="-1">Resumen</h2>
+      <p id="resumen-curso" class="sub"></p>
+      <ul id="resumen-tarjetas" class="tarjetas"></ul>
+      <div class="doble">
+        <section class="panel" aria-labelledby="t-riesgo">
+          <h3 id="t-riesgo">Estudiantes en riesgo</h3>
+          <div id="resumen-riesgo"></div>
+        </section>
+        <section class="panel" aria-labelledby="t-recientes">
+          <h3 id="t-recientes">Últimas sesiones</h3>
+          <div id="resumen-sesiones"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- CURSOS -->
+    <section id="vista-cursos" class="vista" aria-labelledby="t-cursos" hidden>
+      <h2 id="t-cursos" tabindex="-1">Cursos</h2>
+      <div class="panel">
+        <h3>Datos del curso</h3>
+        <form id="form-curso" novalidate>
+          <label for="curso-nombre">Nombre del curso (obligatorio)</label>
+          <input type="text" id="curso-nombre" name="nombre" maxlength="120" placeholder="Ej.: Desarrollo Web I" aria-describedby="mensaje">
+          <label for="curso-docente">Docente</label>
+          <input type="text" id="curso-docente" name="docente" maxlength="120" autocomplete="off">
+          <label for="curso-periodo">Periodo</label>
+          <input type="text" id="curso-periodo" name="periodo" maxlength="40" placeholder="Ej.: 2026-2">
+          <div class="acciones-form">
+            <button type="submit" id="btn-curso-guardar">Crear curso</button>
+            <button type="button" id="btn-curso-cancelar" class="neutro" hidden>Cancelar edición</button>
+          </div>
+        </form>
+      </div>
+      <div class="panel">
+        <h3>Mis cursos</h3>
+        <div class="tabla-scroll">
+          <table>
+            <caption class="sr">Lista de cursos</caption>
+            <thead>
+              <tr>
+                <th scope="col">Curso</th><th scope="col">Docente</th><th scope="col">Periodo</th>
+                <th scope="col" class="num">Estudiantes</th><th scope="col" class="num">Sesiones</th>
+                <th scope="col" class="num">Asistencia</th><th scope="col"><span class="sr">Acciones</span></th>
+              </tr>
+            </thead>
+            <tbody id="cursos-cuerpo"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESTUDIANTES -->
+    <section id="vista-estudiantes" class="vista" aria-labelledby="t-estudiantes" hidden>
+      <h2 id="t-estudiantes" tabindex="-1">Estudiantes</h2>
+      <p id="est-aviso" class="sub" hidden></p>
+      <div id="est-contenido">
+        <div class="doble">
+          <div class="panel">
+            <h3>Datos del estudiante</h3>
+            <form id="form-estudiante" novalidate>
+              <label for="est-nombre">Nombre (obligatorio)</label>
+              <input type="text" id="est-nombre" name="nombre" maxlength="120" autocomplete="off" aria-describedby="mensaje">
+              <label for="est-codigo">Código</label>
+              <input type="text" id="est-codigo" name="codigo" maxlength="30" autocomplete="off">
+              <label for="est-correo">Correo</label>
+              <input type="email" id="est-correo" name="correo" maxlength="120" autocomplete="off">
+              <div class="acciones-form">
+                <button type="submit" id="btn-est-guardar">Agregar estudiante</button>
+                <button type="button" id="btn-est-cancelar" class="neutro" hidden>Cancelar edición</button>
+              </div>
+            </form>
+          </div>
+          <div class="panel">
+            <h3>Agregar varios a la vez</h3>
+            <form id="form-lote" novalidate>
+              <label for="lote-lista">Un nombre por línea</label>
+              <textarea id="lote-lista" name="lista" rows="6" aria-describedby="mensaje"></textarea>
+              <div class="acciones-form"><button type="submit">Agregar lista</button></div>
+            </form>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Lista del curso</h3>
+          <label for="buscar-est">Buscar por nombre o código</label>
+          <input type="search" id="buscar-est" autocomplete="off">
+          <p id="est-conteo" class="sub" role="status"></p>
+          <div class="tabla-scroll">
+            <table>
+              <caption class="sr">Estudiantes del curso activo</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Nombre</th><th scope="col">Código</th><th scope="col">Correo</th>
+                  <th scope="col" class="num">Asistencia</th><th scope="col"><span class="sr">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody id="est-cuerpo"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ASISTENCIA -->
+    <section id="vista-asistencia" class="vista" aria-labelledby="t-asistencia" hidden>
+      <h2 id="t-asistencia" tabindex="-1">Tomar asistencia</h2>
+      <p id="asistencia-aviso" class="sub" hidden></p>
+      <div id="asistencia-contenido">
+        <div class="doble">
+          <div class="panel">
+            <h3>Nueva sesión</h3>
+            <form id="form-sesion" novalidate>
+              <label for="ses-fecha">Fecha</label>
+              <input type="date" id="ses-fecha" name="fecha" aria-describedby="mensaje">
+              <label for="ses-tema">Tema de la clase (opcional)</label>
+              <input type="text" id="ses-tema" name="tema" maxlength="120" autocomplete="off">
+              <div class="acciones-form"><button type="submit">Crear sesión</button></div>
+            </form>
+          </div>
+          <div class="panel">
+            <h3>Sesión activa</h3>
+            <label for="select-sesion">Elige la sesión</label>
+            <select id="select-sesion"></select>
+            <div class="acciones-form">
+              <button type="button" id="btn-borrar-sesion" class="peligro">Eliminar sesión</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <p id="toma-aviso" class="sub" hidden></p>
+          <div id="toma-contenido">
+            <div class="acciones-form">
+              <button type="button" id="btn-todos-presentes" class="neutro">Marcar todos presentes</button>
+              <button type="button" id="btn-todos-ausentes" class="neutro">Marcar todos ausentes</button>
+            </div>
+            <p id="toma-resumen" class="sub" role="status"></p>
+            <div class="tabla-scroll">
+              <table class="tabla-radios">
+                <caption class="sr">Asistencia de la sesión seleccionada</caption>
+                <thead id="toma-cabecera"></thead>
+                <tbody id="toma-cuerpo"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTES -->
+    <section id="vista-reportes" class="vista" aria-labelledby="t-reportes" hidden>
+      <h2 id="t-reportes" tabindex="-1">Reportes</h2>
+      <p id="reporte-aviso" class="sub" hidden></p>
+      <div id="reporte-contenido">
+        <div class="panel no-imprimir">
+          <div class="acciones-form">
+            <button type="button" id="btn-csv">Exportar CSV</button>
+            <button type="button" id="btn-imprimir" class="neutro">Imprimir</button>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="solo-riesgo"> Mostrar solo estudiantes en riesgo
+          </label>
+        </div>
+        <div class="panel">
+          <p id="reporte-titulo" class="sub"></p>
+          <div class="tabla-scroll">
+            <table class="tabla-reporte">
+              <caption class="sr">Matriz de asistencia por estudiante y sesión</caption>
+              <thead id="reporte-cabecera"></thead>
+              <tbody id="reporte-cuerpo"></tbody>
+              <tfoot id="reporte-pie"></tfoot>
+            </table>
+          </div>
+          <p class="leyenda"><strong>Leyenda:</strong> P = Presente · T = Tarde · A = Ausente · E = Excusado.
+            La asistencia cuenta Presente y Tarde; las sesiones Excusadas no cuentan en el total.
+            Una sesión sin marcar cuenta como Ausente.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AJUSTES -->
+    <section id="vista-ajustes" class="vista" aria-labelledby="t-ajustes" hidden>
+      <h2 id="t-ajustes" tabindex="-1">Ajustes</h2>
+      <div class="doble">
+        <div class="panel">
+          <h3>Preferencias</h3>
+          <form id="form-ajustes" novalidate>
+            <label for="aj-umbral">Asistencia mínima aceptable (%)</label>
+            <input type="number" id="aj-umbral" name="umbral" min="1" max="100" step="1" aria-describedby="mensaje">
+            <label for="aj-tema">Tema</label>
+            <select id="aj-tema" name="tema">
+              <option value="auto">Automático (según el dispositivo)</option>
+              <option value="claro">Claro</option>
+              <option value="oscuro">Oscuro</option>
+            </select>
+            <div class="acciones-form"><button type="submit">Guardar ajustes</button></div>
+          </form>
+        </div>
+        <div class="panel">
+          <h3>Copia de seguridad</h3>
+          <p>Descarga todos tus datos en un archivo JSON o restáuralos desde uno.</p>
+          <div class="acciones-form">
+            <button type="button" id="btn-respaldo">Descargar copia</button>
+          </div>
+          <label for="input-importar">Restaurar desde un archivo .json</label>
+          <input type="file" id="input-importar" accept=".json,application/json">
+          <h3 class="zona-peligro">Zona de peligro</h3>
+          <div class="acciones-form">
+            <button type="button" id="btn-borrar-todo" class="peligro">Borrar todos los datos</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
+
+  <footer class="pie no-imprimir"><p>Desarrollo Web I · Proyecto final · 2026</p></footer>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
